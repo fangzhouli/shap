@@ -781,6 +781,15 @@ class TreeEnsemble:
 
             self.trees = [SingleTree(e.tree_, scaling=model.learning_rate, data=data, data_missing=data_missing) for e in model.estimators_[:,0]]
             self.objective = objective_name_map.get(model.criterion, None)
+
+        #######################################################################
+        elif safe_isinstance(model, ["sklearn.ensemble.AdaBoostClassifier"]):
+            scaling = 1.0 / len(model.estimators_) # output is average of trees
+            self.trees = [SingleTree(e.tree_, normalize=True, scaling=scaling) for e in model.estimators_]
+            self.objective = objective_name_map.get(model.base_estimator_.criterion, None) # This line is done to get the decision criteria, for example gini.
+            self.tree_output = "probability" # This is the last line I added
+        #######################################################################
+
         elif "pyspark.ml" in str(type(model)):
             assert_import("pyspark")
             self.model_type = "pyspark"
